@@ -748,11 +748,14 @@ def _build_sequence_card(
       return;
     }}
     if (!window.bitescoreChartJsPromise) {{
-      window.bitescoreChartJsPromise = new Promise(function(resolve) {{
+      window.bitescoreChartJsPromise = new Promise(function(resolve, reject) {{
         const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+        script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js';
         script.onload = function() {{ resolve(); }};
+        script.onerror = function(err) {{ reject(err); }};
         document.head.appendChild(script);
+      }}).catch(function(err) {{
+        console.error('Failed to load Chart.js', err);
       }});
     }}
     window.bitescoreChartJsPromise.then(renderChart);
