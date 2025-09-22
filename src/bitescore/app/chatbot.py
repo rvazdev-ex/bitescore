@@ -120,7 +120,25 @@ MKKLLPTAAAGLLLLAAQPAMARRRKKKYYFWYVVVVTTTTAA
 ASSETS_DIR = Path(__file__).parent / "assets"
 EXAMPLES_DIR = Path(__file__).resolve().parents[3] / "data" / "examples"
 BACTERIAL_GENOME_EXAMPLE_PATH = EXAMPLES_DIR / "GCF_000005845.2_ASM584v2_genomic.fna"
-gr.set_static_paths(paths=[str(ASSETS_DIR)])
+
+
+def _register_asset_path(directory: Path, alias: str = "") -> str:
+    """Register a static asset directory and return the alias actually used."""
+
+    if alias:
+        try:
+            gr.set_static_paths(paths=[(str(directory), alias)])
+        except (TypeError, ValueError):
+            # Older Gradio releases only accept bare string paths.
+            gr.set_static_paths(paths=[str(directory)])
+            return ""
+        else:
+            return alias
+    gr.set_static_paths(paths=[str(directory)])
+    return ""
+
+
+ASSETS_ALIAS = _register_asset_path(ASSETS_DIR, alias="app-assets")
 LOGO_PATH = ASSETS_DIR / "logo.png"
 TEAM_PHOTO_PATH = ASSETS_DIR / "IMG_0021.JPG"
 
@@ -131,6 +149,7 @@ def _load_asset_source(
     mime_type: str,
     *,
     max_inline_bytes: int = 400_000,
+    assets_alias: str = "",
 ) -> str:
     """Return a source attribute for an asset, inlining only small files.
 
@@ -139,32 +158,43 @@ def _load_asset_source(
     fetch them lazily without blocking Gradio's loading spinner.
     """
 
+    def _fallback() -> str:
+        if assets_alias:
+            return f"file={assets_alias}/{fallback_name}"
+        return f"file={fallback_name}"
+
     try:
         size = asset_path.stat().st_size
     except OSError:
-        return f"file={fallback_name}"
+        return _fallback()
 
     if size is None or size > max_inline_bytes:
-        return f"file={fallback_name}"
+        return _fallback()
 
     try:
         data = asset_path.read_bytes()
     except OSError:
-        return f"file={fallback_name}"
+        return _fallback()
 
     encoded = base64.b64encode(data).decode("ascii").strip()
     if not encoded:
-        return f"file={fallback_name}"
+        return _fallback()
 
     return f"data:{mime_type};base64,{encoded}"
 
 
-LOGO_SRC = _load_asset_source(LOGO_PATH, "logo.png", "image/png")
+LOGO_SRC = _load_asset_source(
+    LOGO_PATH,
+    "logo.png",
+    "image/png",
+    assets_alias=ASSETS_ALIAS,
+)
 TEAM_PHOTO_SRC = _load_asset_source(
     TEAM_PHOTO_PATH,
     "IMG_0021.JPG",
     "image/jpeg",
     max_inline_bytes=200_000,
+    assets_alias=ASSETS_ALIAS,
 )
 
 
