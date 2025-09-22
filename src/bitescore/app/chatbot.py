@@ -1453,7 +1453,7 @@ def build_ui():
                                     label="Download Full Results",
                                 )
                             with gr.Column(scale=1):
-                                sequence_card = gr.HTML(visible=False, sanitize=False)
+                                sequence_card = gr.HTML(visible=False)
                                 sequence_viewer = gr.Textbox(
                                     label="Selected Sequence",
                                     interactive=False,
@@ -1499,7 +1499,6 @@ def build_ui():
                                 structure_view = gr.HTML(
                                     value=STRUCTURE_PLACEHOLDER_HTML,
                                     visible=False,
-                                    sanitize=False,
                                 )
 
                 analysis_state = gr.State({})
